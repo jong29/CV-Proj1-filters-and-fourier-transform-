@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import math
 
 def task1_2(src_path, clean_path, dst_path):
     """
@@ -19,7 +20,7 @@ def task1_2(src_path, clean_path, dst_path):
     # result_img = apply_median_filter(noisy_img, 3)
 
     # bilateral
-    result_img = apply_bilateral_filter(noisy_img,3,1,60)
+    result_img = apply_my_filter(noisy_img)
 
     cv2.imwrite(dst_path, result_img)
     print(calculate_rms(clean_img, result_img))
@@ -37,15 +38,13 @@ def apply_median_filter(img, kernel_size):
     """
     pad_size = kernel_size/2
     temp_shape = img.shape
-    img = np.lib.pad(img, [((int(pad_size)),(int(pad_size))),((int(pad_size)),(int(pad_size))),(0,0)],"mean")
+    img = np.lib.pad(img, [((int(pad_size)),(int(pad_size))),((int(pad_size)),(int(pad_size))),(0,0)],"edge")
     dnoise_img = np.zeros((temp_shape[0],temp_shape[1],3))
-    print(img.shape)
     for i in range(3):
         for j in range(0, dnoise_img.shape[0]):
             for k in range(0, dnoise_img.shape[1]):
                 med_filt = img[j:j+kernel_size, k:k+kernel_size,i].ravel()
                 med_filt = np.sort(med_filt)
-                # print(j,k, i)
                 dnoise_img[j,k,i] = med_filt[int(kernel_size*kernel_size/2)]
     return dnoise_img.clip(0,255)
 
@@ -80,7 +79,6 @@ def apply_bilateral_filter(img, kernel_size, sigma_s, sigma_r):
                         pixel_sum += (weight * img[i + x][j + y][k])
                 value = pixel_sum / weight_sum
                 output_image[i][j][k] = value
-                # print(output_image[i][j][k], '->', value)
     return output_image.astype(np.uint8)
 
 
@@ -92,8 +90,33 @@ def apply_my_filter(img):
 
     You should return result image.
     """
-    return img
+    #gaussian filter
+    kernel_size = 3
+    sigma = 1.5
+    k = (kernel_size-1)/2
+    gausskernel = np.zeros((kernel_size,kernel_size),np.float32)
+    for i in range (kernel_size):
+        for j in range (kernel_size):
+            norm = math.pow(i-k,2) + pow(j-k,2)
+            gausskernel[i,j] = math.exp(-norm/(2*math.pow(sigma,2)))/2*math.pi*pow(sigma,2)
+    sum = np.sum(gausskernel)
+    kernel = gausskernel/sum 
+    print(kernel)
 
+    #apply filter to image
+    pad_size = kernel_size//2
+    temp_shape = img.shape
+    
+    img = np.lib.pad(img, [((pad_size),(pad_size)),((pad_size),(pad_size)),(0,0)],"edge")
+    dnoise_img = np.zeros((temp_shape[0],temp_shape[1],3))
+    for i in range(3):
+        for j in range(0, dnoise_img.shape[0]):
+            for k in range(0, dnoise_img.shape[1]):
+                my_filt = kernel.ravel()
+                for x in range(kernel_size**2):
+                    dnoise_img[j,k,i] += img[j,k,i]*my_filt[x]
+                dnoise_img[j,k,i] = dnoise_img[j,k,i] / (kernel_size**2)
+    return dnoise_img.clip(0,255)
 
 def calculate_rms(img1, img2):
     """

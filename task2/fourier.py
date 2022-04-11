@@ -68,7 +68,7 @@ def fm_spectrum(img):
     frimg = np.fft.fft2(img)
     frimg = fftshift(frimg)
     fmspec = 20*np.log(np.abs(frimg))
-    fmspec = np.asarray(fmspec)
+    # fmspec = np.asarray(fmspec)
     
     return fmspec
 
@@ -106,8 +106,6 @@ def high_pass_filter(img, r=20):
 
     h = img.shape[0]
     w = img.shape[1]
-    hc = h//2
-    wc = w//2
 
     hpf = np.zeros((h, w), np.uint8)
 
@@ -116,28 +114,44 @@ def high_pass_filter(img, r=20):
             if (i - (h)/2)**2 + (j - (w)/2)**2 >= r**2:
                 hpf[i, j] = 1
 
-    # fmspec[hc-int(r/2):hc+int(r/2), wc-int(r/2):wc+int(r/2)] = 0
-
     conv=hpf*fmspec
 
     rvshift = ifftshift(conv)
     rvfour = np.fft.ifft2(rvshift)
-    # rvfour = np.abs(rvfour)
 
-    
     temp = np.zeros((h,w))
     for i in range(h):
         for j in range(w):
             temp[i,j] = rvfour[i,j].real
- 
+    
     return temp
 
-def denoise1(img):
+def denoise1(img, r1=5, r2=10):
     '''
     Use adequate technique(s) to denoise the image.
     Hint: Use fourier transform
     '''
-    return img
+
+    frimg = np.fft.fft2(img)
+    fmspec = fftshift(frimg)
+
+    h = img.shape[0]
+    w = img.shape[1]
+    brf = np.zeros((h, w), np.uint8)
+
+    for i in range(h):
+        for j in range(w):
+            coor = (i - (h)/2)**2 + (j - (w)/2)**2
+            if coor>=r1**2 and coor<=r2**2:
+                brf[i, j] = 1
+
+    conv=brf*fmspec
+
+    rvshift = ifftshift(conv)
+    rvfour = np.fft.ifft2(rvshift)
+    rvfour = np.abs(rvfour)
+
+    return rvfour
 
 def denoise2(img):
     '''
