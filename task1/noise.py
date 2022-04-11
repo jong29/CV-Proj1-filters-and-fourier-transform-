@@ -7,7 +7,6 @@ import numpy as np
 def add_gaussian_noise(image):
     # Use mean of 0, and standard deviation of image itself to generate gaussian noise
     gauss = np.random.normal(0, image.std(), image.shape)
-
     return image + gauss
 
 def add_uniform_noise(image):

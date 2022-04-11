@@ -20,11 +20,14 @@ def task1_2(src_path, clean_path, dst_path):
     # result_img = apply_median_filter(noisy_img, 3)
 
     # bilateral
+    # result_img = apply_bilateral_filter(noisy_img, 7, 0.89, 700)
+    # myfilter
     result_img = apply_my_filter(noisy_img)
 
     cv2.imwrite(dst_path, result_img)
+
     print(calculate_rms(clean_img, result_img))
-    pass
+    return
 
 
 def apply_median_filter(img, kernel_size):
@@ -64,6 +67,7 @@ def apply_bilateral_filter(img, kernel_size, sigma_s, sigma_r):
     C = 1 if len(img.shape) == 2 else img.shape[2]
     img = img.reshape(H, W, C)
     output_image = img.copy()
+    kernel_size = kernel_size
 
     for i in range(kernel_size, H - kernel_size):
         for j in range(kernel_size, W - kernel_size):
@@ -91,7 +95,7 @@ def apply_my_filter(img):
     You should return result image.
     """
     #gaussian filter
-    kernel_size = 3
+    kernel_size = 5
     sigma = 1.5
     k = (kernel_size-1)/2
     gausskernel = np.zeros((kernel_size,kernel_size),np.float32)
@@ -101,7 +105,6 @@ def apply_my_filter(img):
             gausskernel[i,j] = math.exp(-norm/(2*math.pow(sigma,2)))/2*math.pi*pow(sigma,2)
     sum = np.sum(gausskernel)
     kernel = gausskernel/sum 
-    print(kernel)
 
     #apply filter to image
     pad_size = kernel_size//2
@@ -112,10 +115,10 @@ def apply_my_filter(img):
     for i in range(3):
         for j in range(0, dnoise_img.shape[0]):
             for k in range(0, dnoise_img.shape[1]):
-                my_filt = kernel.ravel()
-                for x in range(kernel_size**2):
-                    dnoise_img[j,k,i] += img[j,k,i]*my_filt[x]
-                dnoise_img[j,k,i] = dnoise_img[j,k,i] / (kernel_size**2)
+                # my_filt = kernel.ravel()
+                for x in range(-pad_size, pad_size + 1):
+                    for y in range(-pad_size, pad_size + 1):
+                        dnoise_img[j,k,i] += img[j+x,k+y,i]*kernel[x+pad_size, y+pad_size]
     return dnoise_img.clip(0,255)
 
 def calculate_rms(img1, img2):
@@ -132,4 +135,4 @@ def calculate_rms(img1, img2):
     return np.sqrt(np.mean(diff ** 2))
 
 # task1_2("./test_images/cat_noisy.jpg", "./test_images/cat_clean.jpg", "./cat_median.jpg")
-task1_2("./test_images/fox_noisy.jpg", "./test_images/fox_clean.jpg", "./fox_bilateral.jpg")
+task1_2("./test_images/fox_noisy.jpg", "./test_images/fox_clean.jpg", "./fox_my.jpg")
