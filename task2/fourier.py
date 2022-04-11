@@ -121,7 +121,7 @@ def high_pass_filter(img, r=20):
             temp[i,j] = rvfour[i,j].real
     return temp
 
-def denoise1(img, r1=50, r2=70):
+def denoise1(img):
     '''
     Use adequate technique(s) to denoise the image.
     Hint: Use fourier transform
@@ -133,14 +133,19 @@ def denoise1(img, r1=50, r2=70):
     h = img.shape[0]
     w = img.shape[1]
 
-    #scan thorugh image
-    for i in range(h):
-        for j in range(w):
+    #find mean value to substitute part that's causing noise   
+    subval = np.mean(fmspec[170:190,170:190])
 
-            coor = (i - (h)/2)**2 + (j - (w)/2)**2
-            if coor>=r1**2 and coor<=r2**2:
-                fmspec[i, j] = 1
+    #scan thorugh
+    nvals = [[203,203], [175,175], [309,309], [337,337], [203, 309], [175, 337], [309, 203], [337, 175]]
 
+    for i in nvals:
+        for x in range(i[0]-3, i[0]+4):
+            for y in range(i[1]-3, i[1]+4):
+                fmspec[x,y] = subval
+
+
+                    
     rvshift = ifftshift(fmspec)
     rvfour = np.fft.ifft2(rvshift)
     rvfour = np.abs(rvfour)
@@ -166,7 +171,6 @@ def denoise2(img, r1=27, r2=28):
     #scan thorugh image
     for i in range(h):
         for j in range(w):
-            
             coor = (i - (h)/2)**2 + (j - (w)/2)**2
             if coor>=r1**2 and coor<=r2**2:
                 if not((i>h/2-5 and i<h/2+5) and (j>h/2-5 and j<h/2+5)):
